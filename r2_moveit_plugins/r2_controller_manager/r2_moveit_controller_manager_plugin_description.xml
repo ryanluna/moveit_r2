@@ -1,0 +1,8 @@
+<library path="libr2_controller_manager">
+
+  <class name="R2MoveItControllerManager" type="R2MoveItControllerManager" base_class_type="moveit_controller_manager::MoveItControllerManager">
+    <description>
+    </description>
+  </class>
+
+</library>

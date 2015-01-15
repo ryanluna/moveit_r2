@@ -1,0 +1,31 @@
+<package>
+  <name>r2_controller_manager</name>
+  <version>0.0.1</version>
+  <description>r2_controller_manager</description>
+  <maintainer email="rluna@rice.edu">Ryan Luna</maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>pluginlib</build_depend>
+  <build_depend>actionlib_msgs</build_depend>
+  <build_depend>trajectory_msgs</build_depend>
+  <build_depend>nasa_robodyn</build_depend>
+  <build_depend>r2_translation_msgs</build_depend>
+  <build_depend>moveit_core</build_depend>
+
+  <run_depend>roscpp</run_depend>
+  <run_depend>pluginlib</run_depend>
+  <run_depend>actionlib_msgs</run_depend>
+  <run_depend>trajectory_msgs</run_depend>
+  <run_depend>nasa_robodyn</run_depend>
+  <run_depend>r2_translation_msgs</run_depend>
+  <run_depend>moveit_core</run_depend>
+
+  <export>
+    <moveit_core plugin="${prefix}/r2_moveit_controller_manager_plugin_description.xml"/>
+  </export>
+
+</package>

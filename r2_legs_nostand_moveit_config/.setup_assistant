@@ -1,0 +1,8 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: r2_sim_worlds
+    relative_path: robots/r2c_legs_only_creepy.urdf.xacro
+  SRDF:
+    relative_path: config/r2c_full_body.srdf
+  CONFIG:
+    generated_timestamp: 1416588544

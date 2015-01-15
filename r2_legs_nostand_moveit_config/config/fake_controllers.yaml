@@ -1,0 +1,42 @@
+controller_list:
+  - name: fake_left_leg_controller
+    joints:
+      - /r2/left_leg/joint0
+      - /r2/left_leg/joint1
+      - /r2/left_leg/joint2
+      - /r2/left_leg/joint3
+      - /r2/left_leg/joint4
+      - /r2/left_leg/joint5
+      - /r2/left_leg/joint6
+  - name: fake_right_leg_controller
+    joints:
+      - /r2/right_leg/joint0
+      - /r2/right_leg/joint1
+      - /r2/right_leg/joint2
+      - /r2/right_leg/joint3
+      - /r2/right_leg/joint4
+      - /r2/right_leg/joint5
+      - /r2/right_leg/joint6
+  - name: fake_legs_controller
+    joints:
+      - virtual_world
+      - /r2/left_leg/joint0
+      - /r2/left_leg/joint1
+      - /r2/left_leg/joint2
+      - /r2/left_leg/joint3
+      - /r2/left_leg/joint4
+      - /r2/left_leg/joint5
+      - /r2/left_leg/joint6
+      - /r2/right_leg/joint0
+      - /r2/right_leg/joint1
+      - /r2/right_leg/joint2
+      - /r2/right_leg/joint3
+      - /r2/right_leg/joint4
+      - /r2/right_leg/joint5
+      - /r2/right_leg/joint6
+  - name: fake_left_foot_controller
+    joints:
+      []
+  - name: fake_right_foot_controller
+    joints:
+      []

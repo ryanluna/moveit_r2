@@ -1,0 +1,8 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: nasa_r2_config_safety_files
+    relative_path: models/robots/r2c_full_body.urdf.xacro
+  SRDF:
+    relative_path: config/r2c_full_body.srdf
+  CONFIG:
+    generated_timestamp: 1403899884

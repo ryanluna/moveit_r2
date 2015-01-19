@@ -1,6 +1,6 @@
 #include <ros/ros.h>
 #include "moveit_r2_constraints/r2_constraint_sampler.h"
-#include "tree_kinematics_tolerances.h"
+#include "moveit_r2_kinematics/tree_kinematics_tolerances.h"
 
 // For plugin library
 #include <class_loader/class_loader.h>

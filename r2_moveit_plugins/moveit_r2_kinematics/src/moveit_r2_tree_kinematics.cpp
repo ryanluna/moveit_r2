@@ -2,8 +2,8 @@
 /// @brief Implementation of the MoveitR2TreeKinematicsPlugin class: custom tree kinematics for R2 using MoveIt
 /// @author Ryan Luna
 
-#include "moveit_r2_tree_kinematics.h"
-#include "tree_kinematics_tolerances.h"
+#include "moveit_r2_kinematics/moveit_r2_tree_kinematics.h"
+#include "moveit_r2_kinematics/tree_kinematics_tolerances.h"
 
 // URDF, SRDF
 #include <urdf_model/model.h>

@@ -31,7 +31,7 @@
 #include "kdl/chainiksolver.hpp"
 #include "kdl/chainfksolver.hpp"
 
-#include <joint_mimic.hpp>
+#include <moveit_r2_kinematics/joint_mimic.hpp>
 
 namespace KDL
 {

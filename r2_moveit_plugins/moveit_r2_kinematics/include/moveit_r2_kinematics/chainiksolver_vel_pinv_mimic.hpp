@@ -31,7 +31,7 @@
 #include "kdl/utilities/svd_HH.hpp"
 #include "kdl/utilities/svd_eigen_HH.hpp"
 
-#include <joint_mimic.hpp>
+#include <moveit_r2_kinematics/joint_mimic.hpp>
 
 namespace KDL
 {

@@ -57,9 +57,9 @@
 #include <kdl/chainiksolverpos_nr_jl.hpp>
 #include <kdl/chainfksolverpos_recursive.hpp>
 
-#include <chainiksolver_pos_nr_jl_mimic.hpp>
-#include <chainiksolver_vel_pinv_mimic.hpp>
-#include <joint_mimic.hpp>
+#include <moveit_r2_kinematics/chainiksolver_pos_nr_jl_mimic.hpp>
+#include <moveit_r2_kinematics/chainiksolver_vel_pinv_mimic.hpp>
+#include <moveit_r2_kinematics/joint_mimic.hpp>
 
 // MoveIt!
 #include <moveit/kinematics_base/kinematics_base.h>

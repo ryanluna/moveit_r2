@@ -1,4 +1,4 @@
-#include "moveit_r2_chain_kinematics.h"
+#include "moveit_r2_kinematics/moveit_r2_chain_kinematics.h"
 
 // URDF, SRDF
 #include <urdf_model/model.h>

@@ -7,7 +7,7 @@
 #include <moveit/constraint_samplers/default_constraint_samplers.h>
 #include <moveit/planning_scene/planning_scene.h>
 
-#include "moveit_r2_tree_kinematics.h"
+#include "moveit_r2_kinematics/moveit_r2_tree_kinematics.h"
 
 namespace moveit_r2_constraints
 {

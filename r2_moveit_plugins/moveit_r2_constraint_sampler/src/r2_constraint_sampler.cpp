@@ -41,11 +41,13 @@ bool moveit_r2_constraints::MoveItR2ConstraintSamplerAllocator::canService(const
     // ONLY POSITION AND ORIENTATION CONSTRAINTS
     if (constr.joint_constraints.size() > 0 || constr.visibility_constraints.size() > 0)
     {
-        ROS_ERROR("Can only service position and orientation constraints");
+        //ROS_ERROR("Can only service position and orientation constraints");
         return false;
     }
 
-    if (constr.position_constraints.size() > 0 || constr.orientation_constraints.size() > 0)
+    // This is a heavy duty constraint sampler, capable of IK to multiple poses
+    // For a single, fixed pose, let the simpler pose sampler handle it.
+    if (constr.position_constraints.size() > 1 || constr.orientation_constraints.size() > 1)
         return true;
 
     return false;

@@ -1132,7 +1132,7 @@ Visualization Manager:
       Marker Topic: visualization_marker
       Name: Marker
       Namespaces:
-        {}
+        ISS: true
       Queue Size: 100
       Value: true
     - Class: rviz/TF
@@ -1164,7 +1164,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 6.65733
+      Distance: 4.53678
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
@@ -1173,13 +1173,13 @@ Visualization Manager:
       Focal Point:
         X: 0
         Y: 0
-        Z: -1
+        Z: 0
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.129796
+      Pitch: 0.029796
       Target Frame: virtual_root
       Value: XYOrbit (rviz)
-      Yaw: 0.0135343
+      Yaw: 6.27672
     Saved: ~
 Window Geometry:
   Displays:

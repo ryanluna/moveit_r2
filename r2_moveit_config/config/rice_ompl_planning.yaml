@@ -69,10 +69,45 @@ planner_configs:
   ConstrainedBiRRT2kConfigDefault:
     plugin: moveit_ompl_constrained_interface/ConstrainedPlanningContext
     type: geometric::CBiRRT2
+  RRTApproxGeo:
+    plugin: moveit_ompl_interface/GeometricInterpolationPlanningContext
+    type: geometric::RRT
+    range: 0.0  # Max motion added to tree. ==> maxDistance_ default: 0.0, if 0.0, set on setup()
+    goal_bias: 0.05  # When close to goal select goal, with this probability? default: 0.05
   RRTConnectApproxGeo:
     plugin: moveit_ompl_interface/GeometricInterpolationPlanningContext
     type: geometric::RRTConnect
     range: 0.0  # Max motion added to tree. ==> maxDistance_ default: 0.0, if 0.0, set on setup()
+  LBKPIECEApproxGeo:
+    plugin: moveit_ompl_interface/GeometricInterpolationPlanningContext
+    type: geometric::LBKPIECE
+    range: 0.0  # Max motion added to tree. ==> maxDistance_ default: 0.0, if 0.0, set on setup()
+    border_fraction: 0.9  # Fraction of time focused on boarder default: 0.9
+    min_valid_path_fraction: 0.5  # Accept partially valid moves above fraction. default: 0.5
+  SBLApproxGeo:
+    plugin: moveit_ompl_interface/GeometricInterpolationPlanningContext
+    type: geometric::SBL
+    range: 0.0  # Max motion added to tree. ==> maxDistance_ default: 0.0, if 0.0, set on setup()
+  ESTApproxGeo:
+    plugin: moveit_ompl_interface/GeometricInterpolationPlanningContext
+    type: geometric::EST
+    range: 0.0  # Max motion added to tree. ==> maxDistance_ default: 0.0, if 0.0 setup()
+    goal_bias: 0.05  # When close to goal select goal, with this probability. default: 0.05
+  BKPIECEApproxGeo:
+    plugin: moveit_ompl_interface/GeometricInterpolationPlanningContext
+    type: geometric::BKPIECE
+    range: 0.0  # Max motion added to tree. ==> maxDistance_ default: 0.0, if 0.0, set on setup()
+    border_fraction: 0.9  # Fraction of time focused on boarder default: 0.9
+    failed_expansion_score_factor: 0.5  # When extending motion fails, scale score by factor. default: 0.5
+    min_valid_path_fraction: 0.5  # Accept partially valid moves above fraction. default: 0.5
+  KPIECEApproxGeo:
+    plugin: moveit_ompl_interface/GeometricInterpolationPlanningContext
+    type: geometric::KPIECE
+    range: 0.0  # Max motion added to tree. ==> maxDistance_ default: 0.0, if 0.0, set on setup()
+    goal_bias: 0.05  # When close to goal select goal, with this probability. default: 0.05
+    border_fraction: 0.9  # Fraction of time focused on boarder default: 0.9 (0.0,1.]
+    failed_expansion_score_factor: 0.5  # When extending motion fails, scale score by factor. default: 0.5
+    min_valid_path_fraction: 0.5  # Accept partially valid moves above fraction. default: 0.5
   SimplePlanner:
     plugin: moveit_ompl_interface/GeometricInterpolationPlanningContext
     type: geometric::Simple
@@ -115,6 +150,13 @@ legs:
     - ConstrainedRRTkConfigDefault
     - ConstrainedBiRRT2kConfigDefault
     - RRTConnectApproxGeo
+    - RRTApproxGeo
+    - SBLApproxGeo
+    - ESTApproxGeo
+    - LBKPIECEApproxGeo
+    - BKPIECEApproxGeo
+    - KPIECEApproxGeo
     - SimplePlanner
   projection_evaluator: joints(/r2/right_leg/joint0,/r2/left_leg/joint0)
+  #projection_evaluator: link(/r2/right_ankle_roll)
   longest_valid_segment_fraction: 0.05

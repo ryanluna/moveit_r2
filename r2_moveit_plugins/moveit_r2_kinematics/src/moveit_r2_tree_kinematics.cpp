@@ -155,21 +155,6 @@ bool MoveItR2TreeKinematicsPlugin::searchPositionIK(const geometry_msgs::Pose &i
     return getPositionIK(ik_pose, ik_seed_state, solution, error_code, options);
 }
 
-#define F_EQ(a,b) (fabs(a-b) < 1e-6)
-
-static bool equalPoses(const geometry_msgs::Pose& p1, const geometry_msgs::Pose& p2)
-{
-    const geometry_msgs::Point& pt1 = p1.position;
-    const geometry_msgs::Point& pt2 = p2.position;
-    bool equal = F_EQ(pt1.x, pt2.x) && F_EQ(pt1.y, pt2.y) && F_EQ(pt1.z, pt2.z);
-
-    const geometry_msgs::Quaternion& q1 = p1.orientation;
-    const geometry_msgs::Quaternion& q2 = p2.orientation;
-    equal &= F_EQ(q1.x, q2.x) && F_EQ(q1.y, q2.y) && F_EQ(q1.z, q2.z) && F_EQ(q1.w, q2.w);
-
-    return equal;
-}
-
 bool MoveItR2TreeKinematicsPlugin::searchPositionIK(const std::vector<geometry_msgs::Pose> &ik_poses,
                                                     const std::vector<double> &ik_seed_state,
                                                     double timeout,

@@ -1,9 +1,7 @@
+/* Author: Ryan Luna */
+
 #ifndef MOVEIT_R2_CHAIN_KINEMATICS_PLUGIN_
 #define MOVEIT_R2_CHAIN_KINEMATICS_PLUGIN_
-
-/// @file moveit_r2_chain_kinematics.h
-/// @brief Definition of the MoveitR2KinematicsPlugin class: custom kinematics for R2 using MoveIt!
-/// @author Ryan Luna
 
 // ROS
 #include <ros/ros.h>
@@ -17,8 +15,11 @@
 #include <nasa_robodyn_controllers_core/KdlChainIk.h>
 #include <nasa_robodyn_controllers_core/KdlTreeFk.h>
 
+#include <boost/thread/mutex.hpp>
+
 namespace moveit_r2_kinematics
 {
+  /// \brief Custom structure for IK requests on a kinematic chain
     class MoveItR2ChainKinematicsPlugin : public kinematics::KinematicsBase
     {
     public:
@@ -158,25 +159,22 @@ namespace moveit_r2_kinematics
 
 
     protected:
-        robot_model::RobotModelPtr kinematicModel_;
+        robot_model::RobotModelPtr robot_model_;
 
         KdlChainIk* ik_;
         KdlTreeFk* fk_;
-
-        KDL::JntArray defaultJoints_;
-        mutable KDL::JntArray jointsIn_;  // This is a preallocated scratch space, but must change during FK,IK.
-        mutable KDL::JntArray jointsOut_; // This is a preallocated scratch space, but must change during IK
+        KDL::JntArray default_joint_positions_;
 
         // The number of joint values that define this group
-        unsigned int dimension_;
+        unsigned int num_dofs_;
 
         // A mapping of joints in the group to their index in jointNames_, defaultJoints_, etc..
-        std::map<std::string, unsigned int> groupJointIndexMap_;
-        std::vector<std::string> groupJoints_;
-        std::vector<std::string> groupLinks_;
+        std::map<std::string, unsigned int> group_joint_index_map_;
+        std::vector<std::string> group_joints_;
+        std::vector<std::string> group_links_;
 
         // A list of every joint in the system
-        std::vector<std::string> jointNames_;
+        std::vector<std::string> joint_names_;
   };
 }
 

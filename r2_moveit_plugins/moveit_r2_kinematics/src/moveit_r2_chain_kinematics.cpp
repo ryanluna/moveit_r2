@@ -15,10 +15,6 @@
 // NASA R2
 #include <nasa_robodyn_controllers_core/KdlTreeIk.h>
 
-/// @file moveit_r2_chain_kinematics.cpp
-/// @brief Implementation of the MoveitR2ChainKinematicsPlugin class: custom tree kinematics for R2 using MoveIt
-/// @author Ryan Luna
-
 //register MoveItR2ChainKinematicsPlugin  as a KinematicsBase implementation
 CLASS_LOADER_REGISTER_CLASS(moveit_r2_kinematics::MoveItR2ChainKinematicsPlugin, kinematics::KinematicsBase)
 
@@ -26,7 +22,6 @@ namespace moveit_r2_kinematics
 {
 
 //// Kinematics Plugin ////
-
 MoveItR2ChainKinematicsPlugin::MoveItR2ChainKinematicsPlugin() : ik_(NULL), fk_(NULL)
 {
 }
@@ -54,18 +49,18 @@ bool MoveItR2ChainKinematicsPlugin::getPositionIK(const geometry_msgs::Pose &ik_
     kdl_frames.push_back(kdl_frame);
 
     // Update given ik_seed
-    jointsIn_ = defaultJoints_;
-    for(size_t i = 0; i < groupJoints_.size(); i++)
+    KDL::JntArray joints_in = default_joint_positions_;
+    for(size_t i = 0; i < group_joints_.size(); i++)
     {
-        unsigned int idx = groupJointIndexMap_.find(groupJoints_[i])->second;
-        jointsIn_(idx) = ik_seed_state[i];
+        unsigned int idx = group_joint_index_map_.find(group_joints_[i])->second;
+        joints_in(idx) = ik_seed_state[i];
     }
 
     // Computing IK
     std::vector<KDL::JntArray> jointsOut;
     try
     {
-        ik_->getJointPositions(jointsIn_, kdl_frames, jointsOut);
+        ik_->getJointPositions(joints_in, kdl_frames, jointsOut);
     }
     catch (std::runtime_error e)
     {
@@ -75,12 +70,12 @@ bool MoveItR2ChainKinematicsPlugin::getPositionIK(const geometry_msgs::Pose &ik_
     }
 
     // Construct solution vector
-    solution.resize(dimension_);
-    jointsOut_ = jointsOut[0];
-    for (unsigned int i = 0; i < groupJoints_.size(); ++i)
+    solution.resize(num_dofs_);
+    KDL::JntArray final_joint_positions = jointsOut[0];
+    for (unsigned int i = 0; i < group_joints_.size(); ++i)
     {
-        unsigned int idx = groupJointIndexMap_.find(groupJoints_[i])->second;
-        solution[i] = jointsOut_(idx);
+        unsigned int idx = group_joint_index_map_.find(group_joints_[i])->second;
+        solution[i] = final_joint_positions(idx);
     }
 
     return true;
@@ -134,22 +129,20 @@ bool MoveItR2ChainKinematicsPlugin::getPositionFK(const std::vector<std::string>
                                                   const std::vector<double> &joint_angles,
                                                   std::vector<geometry_msgs::Pose> &poses) const
 {
-    std::cout << __FUNCTION__ << std::endl;
-
     poses.resize(link_names.size());
-    if(joint_angles.size() != groupJoints_.size())
+    if(joint_angles.size() != group_joints_.size())
     {
-        ROS_ERROR("Joint angles vector must have size: %lu",groupJoints_.size());
+        ROS_ERROR("Joint angles vector must have size: %lu",group_joints_.size());
         return false;
     }
 
     // Set the input joint values to the defaults
     // Change the joint values to those specified in link_names and joint_angles
-    jointsIn_ = defaultJoints_;
+    KDL::JntArray joints_in = default_joint_positions_;
     for(size_t i = 0; i < poses.size(); i++)
     {
-        unsigned int idx = groupJointIndexMap_.find(link_names[i])->second;
-        jointsIn_(idx) = joint_angles[i];
+        unsigned int idx = group_joint_index_map_.find(link_names[i])->second;
+        joints_in(idx) = joint_angles[i];
     }
 
     // Constructing empty map with names of frames we want
@@ -157,7 +150,7 @@ bool MoveItR2ChainKinematicsPlugin::getPositionFK(const std::vector<std::string>
     for (size_t i = 0; i < poses.size(); ++i)
     {
         // We're given links, but the FK requires joint names.  Get parent joint for each link
-        const std::string& joint_name = kinematicModel_->getLinkModel(link_names[i])->getParentJointModel()->getName();
+        const std::string& joint_name = robot_model_->getLinkModel(link_names[i])->getParentJointModel()->getName();
         frames[joint_name] = KDL::Frame();
     }
 
@@ -167,11 +160,11 @@ bool MoveItR2ChainKinematicsPlugin::getPositionFK(const std::vector<std::string>
     {
         if (fk_)
         {
-            fk_->getPoses(jointsIn_, frames);
+            fk_->getPoses(joints_in, frames);
             // Extracting pose information
             for (size_t i = 0; i < poses.size(); ++i)
             {
-                const std::string& joint_name = kinematicModel_->getLinkModel(link_names[i])->getParentJointModel()->getName();
+                const std::string& joint_name = robot_model_->getLinkModel(link_names[i])->getParentJointModel()->getName();
                 tf::poseKDLToMsg(frames[joint_name], poses[i]);
             }
         }
@@ -229,18 +222,18 @@ bool MoveItR2ChainKinematicsPlugin::initialize(const std::string& robot_descript
         return false;
     }
 
-    // Saving all of our hard work
-    kinematicModel_.reset(new robot_model::RobotModel(urdf_model, srdf));
+    // Load the robot kinematics and semantics (e.g., group information)
+    robot_model_.reset(new robot_model::RobotModel(urdf_model, srdf));
 
     // Extract the joint group
-    if(!kinematicModel_->hasJointModelGroup(group_name_))
+    if(!robot_model_->hasJointModelGroup(group_name_))
     {
         ROS_ERROR("Kinematic model does not contain group \"%s\"", group_name_.c_str());
         return false;
     }
 
     // Getting kinematic model for the joint group in question
-    robot_model::JointModelGroup* jmg = kinematicModel_->getJointModelGroup(group_name_);
+    robot_model::JointModelGroup* jmg = robot_model_->getJointModelGroup(group_name_);
 
     KdlTreeIk tree_ik;
     tree_ik.loadFromParam(robot_description_);
@@ -257,47 +250,45 @@ bool MoveItR2ChainKinematicsPlugin::initialize(const std::string& robot_descript
 
     // Initializing Ik and FK from URDF parameter
     fk_->loadFromParam(robot_description_);
-    ik_->getJointNames(jointNames_);
+    ik_->getJointNames(joint_names_);
 
     // Setting joint limits from URDF
     std::map<std::string, double> limitsLow, limitsHigh;
 
     // Getting default joint values
     std::map<std::string, double> defaultJoints;
-    kinematicModel_->getVariableDefaultPositions(defaultJoints);
+    robot_model_->getVariableDefaultPositions(defaultJoints);
 
     // The total number of DOF
-    dimension_ = jmg->getVariableCount();
-    defaultJoints_.resize(dimension_);
-    jointsIn_.resize(dimension_);
-    jointsOut_.resize(dimension_);
+    num_dofs_ = jmg->getVariableCount();
+    default_joint_positions_.resize(num_dofs_);
 
-    ROS_INFO("Initializing KdlChainIK for \"%s\" with %u DOFs", group_name_.c_str(), dimension_);
+    ROS_INFO("Initializing KdlChainIK for \"%s\" with %u DOFs", group_name_.c_str(), num_dofs_);
 
-    // The order of jointNames_ comes from in house kinematics, and is important to maintain.
-    for (size_t i = 0; i < jointNames_.size(); ++i)
+    // The order of joint_names_ comes from in house kinematics, and is important to maintain.
+    for (size_t i = 0; i < joint_names_.size(); ++i)
     {
-        const moveit::core::VariableBounds& bounds = kinematicModel_->getVariableBounds(jointNames_[i]);
+        const moveit::core::VariableBounds& bounds = robot_model_->getVariableBounds(joint_names_[i]);
         std::pair<double, double> limits(bounds.min_position_, bounds.max_position_);
 
-        //ROS_INFO("    [%lu] - %s with range [%1.4f, %1.4f]", i, jointNames_[i].c_str(), limits.first, limits.second);
-        //ROS_INFO("            Attached to link: %s", kinematicModel_->getJointModel(jointNames_[i])->getChildLinkModel()->getName().c_str());
+        //ROS_INFO("    [%lu] - %s with range [%1.4f, %1.4f]", i, joint_names_[i].c_str(), limits.first, limits.second);
+        //ROS_INFO("            Attached to link: %s", robot_model_->getJointModel(joint_names_[i])->getChildLinkModel()->getName().c_str());
 
         // Inserting into joint limit maps
-        limitsLow[jointNames_[i]] = limits.first;
-        limitsHigh[jointNames_[i]] = limits.second;
+        limitsLow[joint_names_[i]] = limits.first;
+        limitsHigh[joint_names_[i]] = limits.second;
 
         // This joint is in the group
-        if (jmg->hasJointModel(jointNames_[i]))
+        if (jmg->hasJointModel(joint_names_[i]))
         {
-            groupJointIndexMap_[jointNames_[i]] = i;
-            groupJoints_.push_back(jointNames_[i]);
-            groupLinks_.push_back(kinematicModel_->getJointModel(jointNames_[i])->getChildLinkModel()->getName());
+            group_joint_index_map_[joint_names_[i]] = i;
+            group_joints_.push_back(joint_names_[i]);
+            group_links_.push_back(robot_model_->getJointModel(joint_names_[i])->getChildLinkModel()->getName());
             //ROS_INFO("            This joint is in the group!");
         }
 
         // Save default joint value
-        defaultJoints_(i) = defaultJoints[jointNames_[i]];
+        default_joint_positions_(i) = defaultJoints[joint_names_[i]];
     }
 
     return true;
@@ -305,17 +296,17 @@ bool MoveItR2ChainKinematicsPlugin::initialize(const std::string& robot_descript
 
 const std::vector<std::string>& MoveItR2ChainKinematicsPlugin::getJointNames() const
 {
-    return groupJoints_;
+    return group_joints_;
 }
 
 const std::vector<std::string>& MoveItR2ChainKinematicsPlugin::getLinkNames() const
 {
-    return groupLinks_;
+    return group_links_;
 }
 
 const std::vector<std::string>& MoveItR2ChainKinematicsPlugin::getAllJointNames() const
 {
-    return jointNames_;
+    return joint_names_;
 }
 
 } // namespace moveit_r2_kinematics

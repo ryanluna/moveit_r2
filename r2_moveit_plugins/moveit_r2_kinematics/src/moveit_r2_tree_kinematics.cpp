@@ -177,7 +177,6 @@ bool MoveItR2TreeKinematicsPlugin::getPositionFK(const std::vector<std::string> 
     if (joint_angles.size() != group_variable_count_)
     {
         ROS_ERROR("Joint angles vector must have size %u.  Received vector with size %lu", group_variable_count_, joint_angles.size());
-        fk_mutex_.unlock();
         return false;
     }
 

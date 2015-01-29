@@ -1,6 +1,4 @@
-/// @file moveit_r2_tree_kinematics.h
-/// @brief Definition of the MoveitR2KinematicsPlugin class: custom kinematics for R2 using MoveIt!
-/// @author Ryan Luna
+/* Author: Ryan Luna */
 
 #ifndef MOVEIT_R2_TREE_KINEMATICS_PLUGIN_
 #define MOVEIT_R2_TREE_KINEMATICS_PLUGIN_
@@ -21,19 +19,19 @@
 
 namespace moveit_r2_kinematics
 {
+    /// \brief Custom structure for IK requests on a kinematic tree.
     class TreeIkRequest
     {
     public:
-        // Set this link to be fixed
+        /// \brief Set the given link as fixed in the IK request.  This link will serve as a base for the IK solver.
         void addFixedLink(const std::string& link_name);
-        // The goal is to move this link to the given pose, respecting fixed links
-        // Default HIGH priority, because CRITICAL is a bit too picky when running with Gazebo
+        /// \brief Add an IK task to move link_name to the given pose (in global coordinates) with the given priority
         void addLinkPose(const std::string& link_name, const geometry_msgs::Pose& pose, const int priority=KdlTreeIk::CRITICAL);
+        /// \brief Add an IK task to move link_name to the given pose (in global coordinates) with the given priority
         void addLinkPose(const std::string& link_name, const geometry_msgs::Pose& pose, const std::vector<int>& priority);
-        // The pose of the root of the tree
-        //void setWorldState(const geometry_msgs::Pose& world_pose);
+        /// \brief Set the pose of the robot in the world.  This pose corresponds to the "mobile joints" of the IK solver.
         void setWorldState(const Eigen::Affine3d& pose);
-        // Set initial pose for all joints in the tree
+        /// \brief Set the current (seed) values for the robot.
         void setJointValues(const std::vector<double>& values);
 
         const std::vector<std::string>& getFixedLinks() const;
@@ -55,24 +53,29 @@ namespace moveit_r2_kinematics
         geometry_msgs::Pose world_state_;
     };
 
+    /// \brief Custom structure for an IK response
     class TreeIkResponse
     {
     public:
+        /// \brief True if the IK request was successful.
         bool successful() const;
-        //const geometry_msgs::Pose& getWorldState() const;
+        /// \brief Return the new pose of the robot in the world.  This pose corresponds to the "mobile joints" of the IK solver.
         const Eigen::Affine3d& getWorldState() const;
+        /// \brief Return the new joint values for the robot
         const std::vector<double>& getJointValues() const;
 
+        /// \brief Mark the IK request as a failure
         void setFailure();
+        /// \brief Set the world state and joint values after a successful IK request
         void setValues(const Eigen::Affine3d& world, const std::vector<double>& joints);
 
     protected:
         bool success_;
-        //geometry_msgs::Pose world_pose_;
         Eigen::Affine3d world_pose_;
         std::vector<double> joint_values_;
     };
 
+    /// \brief Custom kinematics routines for R2.  NOTE: Currently this implementation is only be functional on the legs.  See implementation of initialize(...).
     class MoveItR2TreeKinematicsPlugin : public kinematics::KinematicsBase
     {
     public:
@@ -280,42 +283,39 @@ namespace moveit_r2_kinematics
         virtual const std::vector<std::string>& getAllJointNames() const;
 
     protected:
-        // The URDF.  Cached here for convenience
-        robot_model::RobotModelPtr kinematicModel_;
+        /// \brief True if the robot is mobile (the robot is not fixed in place)
+        bool mobile_base_;
 
-        // True if the base is mobile (flying robot)
-        bool floatingRoot_;
-
-        // Instance of the IK solver
+        /// \brief The IK solver
         MobileTreeIk* ik_;
-        // Instance of the FK solver
+        /// \brief The FK solver
         KdlTreeFk* fk_;
 
-        // A mutex to lock the MobileTreeIk object
+        /// \brief Mutex locking access to the ik_ member
         mutable boost::mutex ik_mutex_;
-        // A mutex to lock the KdlTreeFk object
+        /// \brief Mutex locking access to the fk_ member
         mutable boost::mutex fk_mutex_;
 
-        // The default joint position for ALL joints in R2
-        KDL::JntArray defaultJoints_;
+        /// \brief The default joint position for ALL joints in R2
+        KDL::JntArray default_joint_positions_;
 
-        // The total number of actuable DOF in R2
-        unsigned int dimension_;
-        // The number of passive DOF (the floating root)
-        unsigned int rootVariables_;
-        // The number of total variables in the joint group (actuable and passive)
-        unsigned int groupVariables_;
+        /// \brief The number of actuable DOFs in R2
+        unsigned int total_dofs_;
+        /// \brief The number of passive DOFs in the mobile base joint
+        unsigned int mobile_base_variable_count_;
+        /// \brief The number of variables in the IK joint group (actuable and passive)
+        unsigned int group_variable_count_;
 
-        // A mapping of joints in the group to their index in jointNames_, defaultJoints_, etc..
-        std::map<std::string, unsigned int> groupJointIndexMap_;
-        std::vector<std::string> groupJoints_;
-        std::vector<std::string> groupLinks_;
+        /// \brief A mapping of joints in the group to their index in jointNames_, default_joint_positions_, etc..
+        std::map<std::string, unsigned int> group_joint_index_map_;
 
-        // A list of every joint in the system
-        std::vector<std::string> jointNames_;
+        /// \brief The set of joints to perform IK for.
+        std::vector<std::string> group_joints_;
+        /// \brief The set of links to perform IK for.
+        std::vector<std::string> group_links_;
+        /// \brief A list of every joint in the system
+        std::vector<std::string> joint_names_;
 
-        // An index map of the group joint seed (much smaller) to the full joint space (much larger)
-        std::vector<unsigned int> seed_to_jointsIn_bijection;
   };
 }
 

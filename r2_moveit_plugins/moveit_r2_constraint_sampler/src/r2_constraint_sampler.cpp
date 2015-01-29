@@ -14,11 +14,6 @@ moveit_r2_constraints::MoveItR2ConstraintSamplerAllocator::~MoveItR2ConstraintSa
 {
 }
 
-moveit_r2_constraints::R2KinematicConstraintSampler::R2KinematicConstraintSampler(const planning_scene::PlanningSceneConstPtr &scene, const std::string &group_name)
-    : constraint_samplers::ConstraintSampler(scene, group_name)
-{
-}
-
 constraint_samplers::ConstraintSamplerPtr moveit_r2_constraints::MoveItR2ConstraintSamplerAllocator::alloc(const planning_scene::PlanningSceneConstPtr &scene,
                                                                const std::string &group_name,
                                                                const moveit_msgs::Constraints &constr)
@@ -53,7 +48,13 @@ bool moveit_r2_constraints::MoveItR2ConstraintSamplerAllocator::canService(const
     return false;
 }
 
-static int getPriorityValue(double value)
+moveit_r2_constraints::R2KinematicConstraintSampler::R2KinematicConstraintSampler(const planning_scene::PlanningSceneConstPtr &scene, const std::string &group_name)
+    : constraint_samplers::ConstraintSampler(scene, group_name)
+{
+}
+
+
+static int getLinearPriorityValue(double value)
 {
     int priority;
 
@@ -64,6 +65,24 @@ static int getPriorityValue(double value)
     else if (value <= moveit_r2_kinematics::MEDIUM_PRIO_LINEAR_TOL)
         priority = KdlTreeIk::MEDIUM;
     else if (value <= moveit_r2_kinematics::LOW_PRIO_LINEAR_TOL)
+        priority = KdlTreeIk::LOW;
+    else
+        priority = KdlTreeIk::IGNORE;
+
+    return priority;
+}
+
+static int getAngularPriorityValue(double value)
+{
+    int priority;
+
+    if (value <= moveit_r2_kinematics::CRITICAL_PRIO_ANGULAR_TOL)
+        priority = KdlTreeIk::CRITICAL;
+    else if (value <= moveit_r2_kinematics::HIGH_PRIO_ANGULAR_TOL)
+        priority = KdlTreeIk::HIGH;
+    else if (value <= moveit_r2_kinematics::MEDIUM_PRIO_ANGULAR_TOL)
+        priority = KdlTreeIk::MEDIUM;
+    else if (value <= moveit_r2_kinematics::LOW_PRIO_ANGULAR_TOL)
         priority = KdlTreeIk::LOW;
     else
         priority = KdlTreeIk::IGNORE;
@@ -125,9 +144,9 @@ static void extractConstraintPriorities(boost::shared_ptr<kinematic_constraints:
             }
         }
 
-        priorities[0] = getPriorityValue(xrange);
-        priorities[1] = getPriorityValue(yrange);
-        priorities[2] = getPriorityValue(zrange);
+        priorities[0] = getLinearPriorityValue(xrange);
+        priorities[1] = getLinearPriorityValue(yrange);
+        priorities[2] = getLinearPriorityValue(zrange);
     }
 
     if (!oc)
@@ -138,9 +157,9 @@ static void extractConstraintPriorities(boost::shared_ptr<kinematic_constraints:
         double Prange = oc->getYAxisTolerance();
         double Yrange = oc->getZAxisTolerance();
 
-        priorities[3] = getPriorityValue(Rrange);
-        priorities[4] = getPriorityValue(Prange);
-        priorities[5] = getPriorityValue(Yrange);
+        priorities[3] = getAngularPriorityValue(Rrange);
+        priorities[4] = getAngularPriorityValue(Prange);
+        priorities[5] = getAngularPriorityValue(Yrange);
     }
 }
 

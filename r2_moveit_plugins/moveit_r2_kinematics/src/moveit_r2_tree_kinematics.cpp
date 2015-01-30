@@ -435,20 +435,36 @@ bool MoveItR2TreeKinematicsPlugin::initialize(const std::string& robot_descripti
     ik_ = new MobileTreeIk();
     fk_ = new KdlTreeFk();
 
-    // If true, use a simplified URDF with only the legs for significantly better
-    // performance in the IK solver
-    // TODO: Add this as a param
-    bool use_simplified_urdf = true;
-    if (use_simplified_urdf)
+    // Attempt to initialize kinematics solvers with a simplified URDF, for efficiency
+    ros::NodeHandle nh;
+    bool initialized_kinematics = false;
+    bool use_simplified_urdf = false;
+    if (nh.hasParam(group_name_ + "/simplified_robot_description"))
     {
-        // Initializing Ik and FK from URDF parameter
-        fk_->loadFromParam("robot_description_legs"); // 2.5x speedup
-        ik_->loadFromParam("robot_description_legs"); // 2.5x speedup
+        try
+        {
+            // Initializing Ik and FK from URDF parameter
+            fk_->loadFromParam(group_name_ + "/simplified_robot_description");
+            ik_->loadFromParam(group_name_ + "/simplified_robot_description"); // 2.5x speedup on legs IK when excluding the upper body
+            ROS_INFO("TreeKinematics: Loaded simplified URDF for group '%s'", group_name_.c_str());
+            initialized_kinematics = true;
+            use_simplified_urdf = true;
+        }
+        catch (std::runtime_error) {} // if the simplified_robot_description doesn't exist, a runtime error will be thrown
     }
-    else
+
+    // No simplified URDF found, or there was an error loading simplified URDF
+    if (!initialized_kinematics)
     {
-        fk_->loadFromParam(robot_description_);
-        ik_->loadFromParam(robot_description_);
+        try
+        {
+            fk_->loadFromParam(robot_description_);
+            ik_->loadFromParam(robot_description_);
+        }
+        catch (std::runtime_error)
+        {
+            return false;
+        }
     }
 
     ik_->getJointNames(joint_names_);  // reading in ALL joint names from IK representation

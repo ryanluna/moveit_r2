@@ -19,6 +19,5 @@
   <export>
     <moveit_core plugin="${prefix}/moveit_r2_tree_kinematics_plugin_description.xml"/>
     <moveit_core plugin="${prefix}/moveit_r2_chain_kinematics_plugin_description.xml"/>
-    <moveit_core plugin="${prefix}/r2_kdl_kinematics_plugin_description.xml"/>
   </export>
 </package>

@@ -1,7 +1,0 @@
-<library path="libr2_kdl_kinematics_plugin">
-  <class name="r2_kdl_kinematics_plugin/KDLKinematicsPlugin" type="r2_kdl_kinematics_plugin::KDLKinematicsPlugin" base_class_type="kinematics::KinematicsBase">
-    <description>
-      A implementation of kinematics as a plugin based on KDL for R2.
-    </description>
-  </class>
-</library>

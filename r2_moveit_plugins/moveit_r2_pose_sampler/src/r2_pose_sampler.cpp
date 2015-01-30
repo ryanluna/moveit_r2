@@ -1,3 +1,5 @@
+/* Author: Ryan Luna */
+
 #include <ros/ros.h>
 #include "moveit_r2_constraints/r2_pose_sampler.h"
 #include "moveit_r2_kinematics/tree_kinematics_tolerances.h"

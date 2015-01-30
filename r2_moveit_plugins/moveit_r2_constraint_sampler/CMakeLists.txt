@@ -29,3 +29,5 @@ add_library(moveit_r2_constraint_sampler src/r2_constraint_sampler.cpp)
 target_link_libraries(moveit_r2_constraint_sampler ${catkin_LIBRARIES})
 
 install(TARGETS moveit_r2_constraint_sampler LIBRARY DESTINATION lib)
+install(FILES moveit_r2_constraint_sampler_plugin_description.xml
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})

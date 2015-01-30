@@ -1,6 +1,6 @@
 #include <unistd.h> // gethostname
 
-#include "r2_controller_manager/R2MoveitControllerManager.h"
+#include "r2_controller_manager/r2_moveit_controller_manager.h"
 
 #include <nasa_r2_common_msgs/Modes.h>
 #include <nasa_r2_common_msgs/LabeledControllerJointSettings.h>

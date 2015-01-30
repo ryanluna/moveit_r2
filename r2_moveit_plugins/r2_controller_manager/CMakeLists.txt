@@ -26,7 +26,7 @@ catkin_package(
 include_directories(${catkin_INCLUDE_DIRS} ${CMAKE_CURRENT_LIST_DIR}/include)
 
 link_directories(${catkin_LIBRARY_DIRS})
-add_library(${PROJECT_NAME} src/R2MoveitControllerManager.cpp)
+add_library(${PROJECT_NAME} src/r2_moveit_controller_manager.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 install(

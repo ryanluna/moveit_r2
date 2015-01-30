@@ -155,6 +155,26 @@ bool MoveItR2TreeKinematicsPlugin::searchPositionIK(const geometry_msgs::Pose &i
     return getPositionIK(ik_pose, ik_seed_state, solution, error_code, options);
 }
 
+#define F_EQ(a, b) fabs(a - b) < 1e-4
+
+static bool equalPoses(const geometry_msgs::Pose& pose1, const geometry_msgs::Pose& pose2)
+{
+    // position
+    if (!F_EQ(pose1.position.x, pose2.position.x) ||
+        !F_EQ(pose1.position.y, pose2.position.y) ||
+        !F_EQ(pose1.position.z, pose2.position.z))
+        return false;
+
+    // orientation
+    if (!F_EQ(pose1.orientation.x, pose2.orientation.x) ||
+        !F_EQ(pose1.orientation.y, pose2.orientation.y) ||
+        !F_EQ(pose1.orientation.z, pose2.orientation.z) ||
+        !F_EQ(pose1.orientation.w, pose2.orientation.w))
+        return false;
+
+    return true;
+}
+
 bool MoveItR2TreeKinematicsPlugin::searchPositionIK(const std::vector<geometry_msgs::Pose> &ik_poses,
                                                     const std::vector<double> &ik_seed_state,
                                                     double timeout,
@@ -165,7 +185,99 @@ bool MoveItR2TreeKinematicsPlugin::searchPositionIK(const std::vector<geometry_m
                                                     const kinematics::KinematicsQueryOptions &options,
                                                     const moveit::core::RobotState* context_state) const
 {
-    ROS_ERROR("searchPositionIK is NOT implemented in this solver");
+    if (ik_seed_state.size() != group_variable_count_)
+    {
+        ROS_ERROR("IK seed state size (%lu) does not equal the number of group variables (%u)", ik_seed_state.size(), group_variable_count_);
+        return false;
+    }
+
+    if (!mobile_base_)
+    {
+        ROS_ERROR("This IK method is meant for a robot with a mobile base");
+        return false;
+    }
+
+    // Creating the seed state
+    robot_state::RobotStatePtr state(new robot_state::RobotState(robot_model_));
+    double* joint_angles = state->getVariablePositions();
+    for(size_t i = 0; i < ik_seed_state.size(); ++i)
+        joint_angles[group_joint_to_robot_state_bijection_[i]] = ik_seed_state[i];
+    state->update();  // forward kinematics
+
+    TreeIkRequest request;
+    TreeIkResponse response;
+
+    // Hopefully one of the tips is at the same pose as the seed state
+    std::string fixed_link("");
+    std::string moving_link("");
+    for(size_t i = 0; i < tip_frames_.size(); ++i)
+    {
+        // NOTE: The ik_poses are given in the coordinate frame of base_frame_.  Should probably transform the
+        // pose below into this frame, in case the global frame is NOT the base_frame_.
+        const Eigen::Affine3d& pose = state->getGlobalLinkTransform(tip_frames_[i]);
+        geometry_msgs::Pose pose_msg;
+        tf::poseEigenToMsg(pose, pose_msg);
+
+        if (equalPoses(pose_msg, ik_poses[i]))
+            request.addFixedLink(tip_frames_[i]);
+        else
+            request.addLinkPose(tip_frames_[i], ik_poses[i]);
+    }
+
+    // Not sure which link to set as the fixed base
+    if (request.getFixedLinks().size() == 0)
+    {
+        ROS_ERROR("TreeKinematics: Fixed base link not found");
+        return false;
+    }
+    if (request.getMovingLinks().size() == 0)
+    {
+        ROS_ERROR("TreeKinematics: No IK tasks");
+        return false;
+    }
+
+    // Setting joint seed values for the IK request
+    const std::vector<std::string>& all_joints = getAllJointNames();
+    std::vector<double> joint_seed(total_dofs_);
+    for(size_t i = 0; i < all_joints.size(); ++i)
+        joint_seed[i] = joint_angles[ik_joints_to_robot_joints_bijection_[i]];
+    request.setJointValues(joint_seed);
+
+    // Posing the robot in space.  By convention, the floating joint is the last seven DOFs in the seed state.
+    geometry_msgs::Pose world_pose_msg;
+    world_pose_msg.position.x = ik_seed_state[group_variable_count_ - 7];
+    world_pose_msg.position.y = ik_seed_state[group_variable_count_ - 6];
+    world_pose_msg.position.z = ik_seed_state[group_variable_count_ - 5];
+    world_pose_msg.orientation.x = ik_seed_state[group_variable_count_ - 4];
+    world_pose_msg.orientation.y = ik_seed_state[group_variable_count_ - 3];
+    world_pose_msg.orientation.z = ik_seed_state[group_variable_count_ - 2];
+    world_pose_msg.orientation.w = ik_seed_state[group_variable_count_ - 1];
+
+    Eigen::Affine3d world_pose;
+    tf::poseMsgToEigen(world_pose_msg, world_pose);
+    request.setWorldState(world_pose);
+
+    // IK request
+    if (getPositionIk(request, response))
+    {
+        solution.assign(response.getJointValues().begin(), response.getJointValues().end());
+
+        // Add the world pose.  A bit of a hard-code here - the order of the joint
+        // variables is assumed to be x,y,z, qx, qy, qz, qw.
+        const Eigen::Affine3d& world_pose = response.getWorldState();
+
+        solution.push_back(world_pose.translation()[0]);    // x
+        solution.push_back(world_pose.translation()[1]);    // y
+        solution.push_back(world_pose.translation()[2]);    // z
+
+        Eigen::Quaternion<double> q(world_pose.rotation());
+        solution.push_back(q.x());
+        solution.push_back(q.y());
+        solution.push_back(q.z());
+        solution.push_back(q.w());
+
+        return true;
+    }
     return false;
 }
 
@@ -185,6 +297,7 @@ bool MoveItR2TreeKinematicsPlugin::getPositionFK(const std::vector<std::string> 
     KDL::JntArray joints_in = default_joint_positions_;
 
     // Seeding input state
+    // TODO: This is really slow.  Make faster with bijection.
     for(size_t i = 0; i < group_joints_.size(); ++i)
     {
         std::map<std::string, unsigned int>::const_iterator it;
@@ -276,12 +389,10 @@ bool MoveItR2TreeKinematicsPlugin::initialize(const std::string& robot_descripti
     group_name_ = group_name;
     base_frame_ = base_frame;
 
-    // HACK ALERT: Hard-coding in tip frames
-    // TODO: See about automatically populating this
-    //tip_frames_ = tip_frames;
-    tip_frames_.push_back("/r2/right_ankle_roll");
-    tip_frames_.push_back("/r2/left_ankle_roll");
+    if (tip_frames.size() <= 1)
+        ROS_WARN("Found %lu tip frame(s).  Did you add a kinematics_solver_ik_links entry to kinematics.yaml?", tip_frames.size());
 
+    tip_frames_ = tip_frames;
     tip_frame_ = tip_frames[0]; // For legacy KinematicsBase functionality
     search_discretization_ = search_discretization;
 
@@ -308,38 +419,25 @@ bool MoveItR2TreeKinematicsPlugin::initialize(const std::string& robot_descripti
     }
 
     // Load the robot kinematics and semantics (e.g., group information)
-    robot_model::RobotModelPtr robot_model(new robot_model::RobotModel(urdf_model, srdf));
+    robot_model_.reset(new robot_model::RobotModel(urdf_model, srdf));
 
     // Extract the joint group
-    if(!robot_model->hasJointModelGroup(group_name_))
+    if(!robot_model_->hasJointModelGroup(group_name_))
     {
         ROS_ERROR("Kinematic model does not contain group \"%s\"", group_name_.c_str());
         return false;
     }
 
     // Getting kinematic model for the joint group in question
-    robot_model::JointModelGroup* jmg = robot_model->getJointModelGroup(group_name_);
+    robot_model::JointModelGroup* jmg = robot_model_->getJointModelGroup(group_name_);
     group_variable_count_ = jmg->getVariableCount();
-
-    // Fix this based on base_frame
-    const std::vector<const robot_model::JointModel*>& joint_roots = jmg->getJointRoots();
-    mobile_base_ = false;
-    mobile_base_variable_count_ = 0;
-    std::string rootJoint = "";
-    for (size_t i = 0; i < joint_roots.size() && !mobile_base_; ++i)
-    {
-        if (joint_roots[i]->getType() == robot_model::JointModel::FLOATING)
-        {
-            rootJoint = joint_roots[i]->getName();
-            mobile_base_ = true;
-         }
-    }
 
     ik_ = new MobileTreeIk();
     fk_ = new KdlTreeFk();
 
     // If true, use a simplified URDF with only the legs for significantly better
     // performance in the IK solver
+    // TODO: Add this as a param
     bool use_simplified_urdf = true;
     if (use_simplified_urdf)
     {
@@ -353,19 +451,29 @@ bool MoveItR2TreeKinematicsPlugin::initialize(const std::string& robot_descripti
         ik_->loadFromParam(robot_description_);
     }
 
-    ik_->getJointNames(joint_names_);  // reading in ALL joint names from URDF
+    ik_->getJointNames(joint_names_);  // reading in ALL joint names from IK representation
 
-    // Finding DOF of floating root
-    if (mobile_base_)
+    const std::vector<const robot_model::JointModel*>& joint_roots = jmg->getJointRoots();
+    mobile_base_ = false;
+    mobile_base_variable_count_ = 0;
+    std::string base_joint_ = "";
+    for (size_t i = 0; i < joint_roots.size(); ++i)
     {
-        mobile_base_variable_count_ = robot_model->getJointModel(rootJoint)->getVariableCount();
-        ROS_INFO("Found floating root joint '%s' with %u DOFs", rootJoint.c_str(), mobile_base_variable_count_);
+        if (joint_roots[i]->getType() == robot_model::JointModel::FLOATING)
+        {
+            base_joint_ = joint_roots[i]->getName();
+            mobile_base_ = true;
+            mobile_base_variable_count_ = joint_roots[i]->getVariableCount();
+         }
     }
+
+    if (!mobile_base_)
+        ROS_WARN("TreeKinematics: Expected a floating root joint");
 
     // Getting default joint values
     std::map<std::string, double> default_joints;
     std::map<std::string, double> joint_inertias;
-    robot_model->getVariableDefaultPositions(default_joints);
+    robot_model_->getVariableDefaultPositions(default_joints);
 
     // The total number of DOF, minus floating root
     if (use_simplified_urdf)
@@ -374,18 +482,19 @@ bool MoveItR2TreeKinematicsPlugin::initialize(const std::string& robot_descripti
         total_dofs_ = default_joints.size() - mobile_base_variable_count_;
     default_joint_positions_.resize(total_dofs_);
 
-    ROS_INFO("Initializing MobileTreeIK for \"%s\" with %u DOFs", group_name_.c_str(), total_dofs_);
+    //ROS_INFO("Initializing MobileTreeIK for \"%s\" with %u DOFs", group_name_.c_str(), total_dofs_);
 
     std::vector<double> min_joint_limits;
     std::vector<double> max_joint_limits;
     // Extracting all joint limits from URDF and joints in the group
+    // TODO: Read joint limits from MoveIt yaml config instead?
     for (size_t i = 0; i < joint_names_.size(); ++i)
     {
-        const moveit::core::VariableBounds& bounds = robot_model->getVariableBounds(joint_names_[i]);
+        const moveit::core::VariableBounds& bounds = robot_model_->getVariableBounds(joint_names_[i]);
         std::pair<double, double> limits(bounds.min_position_, bounds.max_position_);
 
         //ROS_INFO("    [%lu] - %s with range [%1.4f, %1.4f]", i, joint_names_[i].c_str(), limits.first, limits.second);
-        //ROS_INFO("            Attached to link: %s", robot_model->getJointModel(joint_names_[i])->getChildLinkModel()->getName().c_str());
+        //ROS_INFO("            Attached to link: %s", robot_model_->getJointModel(joint_names_[i])->getChildLinkModel()->getName().c_str());
 
         // Inserting into joint limit maps
         min_joint_limits.push_back(limits.first);
@@ -394,27 +503,52 @@ bool MoveItR2TreeKinematicsPlugin::initialize(const std::string& robot_descripti
         // Unit mass for all joints.  TODO: Fill this with the actual value.
         joint_inertias[joint_names_[i]] = 1.0;
 
+        // Save default joint value
+        default_joint_positions_(i) = default_joints[joint_names_[i]];
+
+        // Constructing bijection between joint value array for internal ik and joint value array for MoveIt robot state.
+        const robot_model::JointModel* joint = robot_model_->getJointModel(joint_names_[i]);
+        const std::vector<std::string>& var_names = joint->getVariableNames();
+        for(size_t j = 0; j < var_names.size(); ++j)
+            ik_joints_to_robot_joints_bijection_.push_back(robot_model_->getVariableIndex(var_names[j]));
+
         // This joint is in the group
         if (jmg->hasJointModel(joint_names_[i]))
         {
             group_joint_index_map_[joint_names_[i]] = i;
             group_joints_.push_back(joint_names_[i]);
-            group_links_.push_back(robot_model->getJointModel(joint_names_[i])->getChildLinkModel()->getName());
-            //ROS_INFO("            This joint is in the group!");
-        }
+            group_links_.push_back(robot_model_->getJointModel(joint_names_[i])->getChildLinkModel()->getName());
 
-        // Save default joint value
-        default_joint_positions_(i) = default_joints[joint_names_[i]];
+            // Constructing bijection between joint value array for the group and joint value array for MoveIt robot state.
+            for(size_t j = 0; j < var_names.size(); ++j)
+                group_joint_to_robot_state_bijection_.push_back(robot_model_->getVariableIndex(var_names[j]));
+        }
     }
 
     // Adding the floating (virtual) joint to the group joints list since it is passively actuated
+    // By design, this joint and link is always the last entry in the group_joints and group_links lists.
     if (mobile_base_)
     {
-        group_joints_.push_back(rootJoint);
-        group_links_.push_back(robot_model->getJointModel(rootJoint)->getChildLinkModel()->getName());
+        const robot_model::JointModel* joint = robot_model_->getJointModel(base_joint_);
+
+        group_joints_.push_back(base_joint_);
+        group_links_.push_back(joint->getChildLinkModel()->getName());
+
+        const std::vector<std::string>& var_names = joint->getVariableNames();
+        for(size_t j = 0; j < var_names.size(); ++j)
+            group_joint_to_robot_state_bijection_.push_back(robot_model_->getVariableIndex(var_names[j]));
     }
 
-    assert(group_joints_.size() == group_links_.size());
+    if(group_joints_.size() != group_links_.size())
+    {
+        ROS_ERROR("TreeKinematics: The number of joints is not equal to the number of links!");
+        return false;
+    }
+    if(group_joint_to_robot_state_bijection_.size() != group_variable_count_)
+    {
+        ROS_ERROR("TreeKinematics: Bijection size mismatch");
+        return false;
+    }
 
     // Initializing position limiter (joint limits) for MobileTreeIk
     boost::shared_ptr<JointNamePositionLimiter> position_limiter(new JointNamePositionLimiter());

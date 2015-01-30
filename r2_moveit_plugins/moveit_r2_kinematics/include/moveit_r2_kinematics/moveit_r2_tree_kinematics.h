@@ -283,6 +283,9 @@ namespace moveit_r2_kinematics
         virtual const std::vector<std::string>& getAllJointNames() const;
 
     protected:
+        /// \brief A model of the entire robot
+        robot_model::RobotModelPtr robot_model_;
+
         /// \brief True if the robot is mobile (the robot is not fixed in place)
         bool mobile_base_;
 
@@ -316,6 +319,10 @@ namespace moveit_r2_kinematics
         /// \brief A list of every joint in the system
         std::vector<std::string> joint_names_;
 
+        /// \brief A mapping of group joint variables to their indices in the full robot state
+        std::vector<int> group_joint_to_robot_state_bijection_;
+        /// \brief A mapping of joint variables in the IK representation to their indices in the full robot state
+        std::vector<int> ik_joints_to_robot_joints_bijection_;
   };
 }
 

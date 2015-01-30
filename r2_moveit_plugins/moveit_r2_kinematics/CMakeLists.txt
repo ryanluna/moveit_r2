@@ -32,3 +32,5 @@ add_library(moveit_r2_chain_kinematics src/moveit_r2_chain_kinematics.cpp)
 target_link_libraries(moveit_r2_chain_kinematics ${catkin_LIBRARIES})
 
 install(TARGETS moveit_r2_tree_kinematics moveit_r2_chain_kinematics LIBRARY DESTINATION lib)
+install(FILES moveit_r2_chain_kinematics_plugin_description.xml moveit_r2_tree_kinematics_plugin_description.xml
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})

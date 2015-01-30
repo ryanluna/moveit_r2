@@ -1,3 +1,5 @@
+/* Author: Ryan Luna */
+
 #include "moveit_r2_kinematics/moveit_r2_chain_kinematics.h"
 
 // URDF, SRDF

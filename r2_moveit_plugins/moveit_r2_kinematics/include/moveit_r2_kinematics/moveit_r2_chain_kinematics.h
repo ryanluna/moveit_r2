@@ -159,21 +159,28 @@ namespace moveit_r2_kinematics
 
 
     protected:
+        /// \brief A model of the entire robot
         robot_model::RobotModelPtr robot_model_;
 
+        /// \brief The IK solver
         KdlChainIk* ik_;
+        /// \brief The FK solver
         KdlTreeFk* fk_;
+
+        /// \brief The default joint position for ALL joints in R2
         KDL::JntArray default_joint_positions_;
 
-        // The number of joint values that define this group
+        /// \brief The number of joint positions in this kinematic chain
         unsigned int num_dofs_;
 
-        // A mapping of joints in the group to their index in jointNames_, defaultJoints_, etc..
+        /// \brief A mapping of joints in the group to their index in jointNames_, default_joint_positions_, etc..
         std::map<std::string, unsigned int> group_joint_index_map_;
-        std::vector<std::string> group_joints_;
-        std::vector<std::string> group_links_;
 
-        // A list of every joint in the system
+        /// \brief The set of joints to perform IK for.
+        std::vector<std::string> group_joints_;
+        /// \brief The set of links to perform IK for.
+        std::vector<std::string> group_links_;
+        /// \brief A list of every joint in the system
         std::vector<std::string> joint_names_;
   };
 }

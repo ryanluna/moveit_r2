@@ -253,11 +253,11 @@ bool MoveItR2ChainKinematicsPlugin::initialize(const std::string& robot_descript
     ik_->getJointNames(joint_names_);
 
     // Setting joint limits from URDF
-    std::map<std::string, double> limitsLow, limitsHigh;
+    //std::map<std::string, double> min_joint_limits, max_joint_limits;
 
     // Getting default joint values
-    std::map<std::string, double> defaultJoints;
-    robot_model_->getVariableDefaultPositions(defaultJoints);
+    std::map<std::string, double> default_joints;
+    robot_model_->getVariableDefaultPositions(default_joints);
 
     // The total number of DOF
     num_dofs_ = jmg->getVariableCount();
@@ -268,15 +268,15 @@ bool MoveItR2ChainKinematicsPlugin::initialize(const std::string& robot_descript
     // The order of joint_names_ comes from in house kinematics, and is important to maintain.
     for (size_t i = 0; i < joint_names_.size(); ++i)
     {
-        const moveit::core::VariableBounds& bounds = robot_model_->getVariableBounds(joint_names_[i]);
-        std::pair<double, double> limits(bounds.min_position_, bounds.max_position_);
+        //const moveit::core::VariableBounds& bounds = robot_model_->getVariableBounds(joint_names_[i]);
+        //std::pair<double, double> limits(bounds.min_position_, bounds.max_position_);
 
         //ROS_INFO("    [%lu] - %s with range [%1.4f, %1.4f]", i, joint_names_[i].c_str(), limits.first, limits.second);
         //ROS_INFO("            Attached to link: %s", robot_model_->getJointModel(joint_names_[i])->getChildLinkModel()->getName().c_str());
 
         // Inserting into joint limit maps
-        limitsLow[joint_names_[i]] = limits.first;
-        limitsHigh[joint_names_[i]] = limits.second;
+        //min_joint_limits[joint_names_[i]] = limits.first;
+        //max_joint_limits[joint_names_[i]] = limits.second;
 
         // This joint is in the group
         if (jmg->hasJointModel(joint_names_[i]))
@@ -284,11 +284,10 @@ bool MoveItR2ChainKinematicsPlugin::initialize(const std::string& robot_descript
             group_joint_index_map_[joint_names_[i]] = i;
             group_joints_.push_back(joint_names_[i]);
             group_links_.push_back(robot_model_->getJointModel(joint_names_[i])->getChildLinkModel()->getName());
-            //ROS_INFO("            This joint is in the group!");
         }
 
         // Save default joint value
-        default_joint_positions_(i) = defaultJoints[joint_names_[i]];
+        default_joint_positions_(i) = default_joints[joint_names_[i]];
     }
 
     return true;

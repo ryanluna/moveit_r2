@@ -504,6 +504,7 @@ bool MoveItR2TreeKinematicsPlugin::initialize(const std::string& robot_descripti
     std::vector<double> max_joint_limits;
     // Extracting all joint limits from URDF and joints in the group
     // TODO: Read joint limits from MoveIt yaml config instead?
+    const KDL::Tree& kdl_tree = ik_->getTree();
     for (size_t i = 0; i < joint_names_.size(); ++i)
     {
         const moveit::core::VariableBounds& bounds = robot_model_->getVariableBounds(joint_names_[i]);
@@ -516,8 +517,11 @@ bool MoveItR2TreeKinematicsPlugin::initialize(const std::string& robot_descripti
         min_joint_limits.push_back(limits.first);
         max_joint_limits.push_back(limits.second);
 
-        // Unit mass for all joints.  TODO: Fill this with the actual value.
-        joint_inertias[joint_names_[i]] = 1.0;
+        // Getting mass for each link
+        std::string child_link = robot_model_->getJointModel(joint_names_[i])->getChildLinkModel()->getName();
+        double mass = kdl_tree.getSegment(child_link)->second.segment.getInertia().getMass();
+        ROS_DEBUG("Tree Kinematics: Mass of '%s' is %f", child_link.c_str(), mass);
+        joint_inertias[joint_names_[i]] = mass;
 
         // Save default joint value
         default_joint_positions_(i) = default_joints[joint_names_[i]];

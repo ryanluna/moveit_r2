@@ -108,13 +108,13 @@ planner_configs:
     border_fraction: 0.9  # Fraction of time focused on boarder default: 0.9 (0.0,1.]
     failed_expansion_score_factor: 0.5  # When extending motion fails, scale score by factor. default: 0.5
     min_valid_path_fraction: 0.5  # Accept partially valid moves above fraction. default: 0.5
-  RRTstar_AG_Opt:
+  RRTstar_AG:
     plugin: ompl_interface/GeometricInterpolationPlanningContext
     type: geometric::RRTstar
     range: 0.0  # Max motion added to tree. ==> maxDistance_ default: 0.0, if 0.0, set on setup()
     goal_bias: 0.05  # When close to goal select goal, with this probability? default: 0.05
     delay_collision_checking: 1  # Stop collision checking as soon as C-free parent found. default 1
-  TRRT_AG_Opt:
+  TRRT_AG:
     plugin: ompl_interface/GeometricInterpolationPlanningContext
     type: geometric::TRRT
     range: 0.0  # Max motion added to tree. ==> maxDistance_ default: 0.0, if 0.0, set on setup()
@@ -131,9 +131,86 @@ planner_configs:
     type: geometric::STRIDE
     range: 0.0  # Max motion added to tree. ==> maxDistance_ default: 0.0, if 0.0, set on setup()
     goal_bias: 0.05  # When close to goal select goal, with this probability? default: 0.05
+  SBL:
+    plugin: ompl_interface/GeometricPoseConstraintPlanningContext
+    type: geometric::SBL
+    range: 0.0  # Max motion added to tree. ==> maxDistance_ default: 0.0, if 0.0, set on setup()
+  EST:
+    plugin: ompl_interface/GeometricPoseConstraintPlanningContext
+    type: geometric::EST
+    range: 0.0  # Max motion added to tree. ==> maxDistance_ default: 0.0, if 0.0 setup()
+    goal_bias: 0.05  # When close to goal select goal, with this probability. default: 0.05
+  LBKPIECE:
+    plugin: ompl_interface/GeometricPoseConstraintPlanningContext
+    type: geometric::LBKPIECE
+    range: 0.0  # Max motion added to tree. ==> maxDistance_ default: 0.0, if 0.0, set on setup()
+    border_fraction: 0.9  # Fraction of time focused on boarder default: 0.9
+    min_valid_path_fraction: 0.5  # Accept partially valid moves above fraction. default: 0.5
+  BKPIECE:
+    plugin: ompl_interface/GeometricPoseConstraintPlanningContext
+    type: geometric::BKPIECE
+    range: 0.0  # Max motion added to tree. ==> maxDistance_ default: 0.0, if 0.0, set on setup()
+    border_fraction: 0.9  # Fraction of time focused on boarder default: 0.9
+    failed_expansion_score_factor: 0.5  # When extending motion fails, scale score by factor. default: 0.5
+    min_valid_path_fraction: 0.5  # Accept partially valid moves above fraction. default: 0.5
+  KPIECE:
+    plugin: ompl_interface/GeometricPoseConstraintPlanningContext
+    type: geometric::KPIECE
+    range: 0.0  # Max motion added to tree. ==> maxDistance_ default: 0.0, if 0.0, set on setup()
+    goal_bias: 0.05  # When close to goal select goal, with this probability. default: 0.05
+    border_fraction: 0.9  # Fraction of time focused on boarder default: 0.9 (0.0,1.]
+    failed_expansion_score_factor: 0.5  # When extending motion fails, scale score by factor. default: 0.5
+    min_valid_path_fraction: 0.5  # Accept partially valid moves above fraction. default: 0.5
+  RRT:
+    plugin: ompl_interface/GeometricPoseConstraintPlanningContext
+    type: geometric::RRT
+    range: 0.0  # Max motion added to tree. ==> maxDistance_ default: 0.0, if 0.0, set on setup()
+    goal_bias: 0.05  # When close to goal select goal, with this probability? default: 0.05
+  RRTConnect:
+    plugin: ompl_interface/GeometricPoseConstraintPlanningContext
+    type: geometric::RRTConnect
+    range: 0.0  # Max motion added to tree. ==> maxDistance_ default: 0.0, if 0.0, set on setup()
+  RRTstar:
+    plugin: ompl_interface/GeometricPoseConstraintPlanningContext
+    type: geometric::RRTstar
+    range: 0.0  # Max motion added to tree. ==> maxDistance_ default: 0.0, if 0.0, set on setup()
+    goal_bias: 0.05  # When close to goal select goal, with this probability? default: 0.05
+    delay_collision_checking: 1  # Stop collision checking as soon as C-free parent found. default 1
+  TRRT:
+    plugin: ompl_interface/GeometricPoseConstraintPlanningContext
+    type: geometric::TRRT
+    range: 0.0  # Max motion added to tree. ==> maxDistance_ default: 0.0, if 0.0, set on setup()
+    goal_bias: 0.05  # When close to goal select goal, with this probability? default: 0.05
+    max_states_failed: 10  # when to start increasing temp. default: 10
+    temp_change_factor: 2.0  # how much to increase or decrease temp. default: 2.0
+    min_temperature: 10e-10  # lower limit of temp change. default: 10e-10
+    init_temperature: 10e-6  # initial temperature. default: 10e-6
+    frountier_threshold: 0.0  # dist new state to nearest neighbor to disqualify as frontier. default: 0.0 set in setup()
+    frountierNodeRatio: 0.1  # 1/10, or 1 nonfrontier for every 10 frontier. default: 0.1
+    k_constant: 0.0  # value used to normalize expresssion. default: 0.0 set in setup()
+  STRIDE:
+    plugin: ompl_interface/GeometricPoseConstraintPlanningContext
+    type: geometric::STRIDE
+    range: 0.0  # Max motion added to tree. ==> maxDistance_ default: 0.0, if 0.0, set on setup()
+    goal_bias: 0.05  # When close to goal select goal, with this probability? default: 0.05
   SimplePlanner:
     plugin: ompl_interface/GeometricInterpolationPlanningContext
     type: geometric::Simple
+  CASPER:
+    plugin: ompl_interface/GeometricPoseConstraintPlanningContext
+    type: geometric::CASPER
+    range: 5.0
+    explore_time: 1.0
+    k: 2
+  CASPER_AG:
+    plugin: ompl_interface/GeometricInterpolationPlanningContext
+    type: geometric::CASPER
+    range: 5.0
+    explore_time: 1.0
+    k: 2
+  BestPlannerEVAR:
+    plugin: ompl_interface/MyOMPLPlanningContext
+    type: geometric::BestPlannerEVAR
 left_leg:
   planner_configs:
     - SBLkConfigDefault
@@ -149,6 +226,7 @@ left_leg:
     - PRMstarkConfigDefault
     - RRTConnect_AG
     - SimplePlanner
+    - BestPlannerEVAR
   projection_evaluator: joints(/r2/left_leg/joint0,/r2/left_leg/joint1)
   longest_valid_segment_fraction: 0.05
 right_leg:
@@ -179,10 +257,35 @@ legs:
     - LBKPIECE_AG
     - BKPIECE_AG
     - KPIECE_AG
-    - RRTstar_AG_Opt
-    - TRRT_AG_Opt
+    - RRTstar_AG
+    - TRRT_AG
     - STRIDE_AG
+    - SBL
+    - EST
+    - LBKPIECE
+    - BKPIECE
+    - KPIECE
+    - RRT
+    - RRTConnect
+    - RRTstar
+    - TRRT
+    - STRIDE
     - SimplePlanner
+    - CASPER
+    - CASPER_AG
   projection_evaluator: joints(/r2/right_leg/joint0,/r2/left_leg/joint0)
   #projection_evaluator: link(/r2/right_ankle_roll)
   longest_valid_segment_fraction: 0.05
+upper body:
+  planner_configs:
+    - SBLkConfigDefault
+    - ESTkConfigDefault
+    - LBKPIECEkConfigDefault
+    - BKPIECEkConfigDefault
+    - KPIECEkConfigDefault
+    - RRTkConfigDefault
+    - RRTConnectkConfigDefault
+    - RRTstarkConfigDefault
+    - TRRTkConfigDefault
+    - PRMkConfigDefault
+    - PRMstarkConfigDefault

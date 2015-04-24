@@ -29,6 +29,7 @@ controller_list:
       - /r2/right_leg/gripper/joint2
   - name: fake_legs_controller
     joints:
+      - virtual_world
       - /r2/left_leg/joint0
       - /r2/left_leg/joint1
       - /r2/left_leg/joint2
@@ -43,3 +44,47 @@ controller_list:
       - /r2/right_leg/joint4
       - /r2/right_leg/joint5
       - /r2/right_leg/joint6
+  - name: fake_upper_body_controller
+    joints:
+      - /r2/waist/joint0
+      - /r2/left_arm/joint0
+      - /r2/left_arm/joint1
+      - /r2/left_arm/joint2
+      - /r2/left_arm/joint3
+      - /r2/left_arm/joint4
+      - /r2/left_arm/wrist/pitch
+      - /r2/left_arm/wrist/yaw
+      - /r2/left_arm/hand/index/yaw
+      - /r2/left_arm/hand/index/proximal
+      - /r2/left_arm/hand/index/medial
+      - /r2/left_arm/hand/middle/yaw
+      - /r2/left_arm/hand/middle/proximal
+      - /r2/left_arm/hand/middle/medial
+      - /r2/left_arm/hand/ringlittle/little
+      - /r2/left_arm/hand/ringlittle/ring
+      - /r2/left_arm/hand/thumb/roll
+      - /r2/left_arm/hand/thumb/proximal
+      - /r2/left_arm/hand/thumb/medial
+      - /r2/left_arm/hand/thumb/distal
+      - /r2/right_arm/joint0
+      - /r2/right_arm/joint1
+      - /r2/right_arm/joint2
+      - /r2/right_arm/joint3
+      - /r2/right_arm/joint4
+      - /r2/right_arm/wrist/pitch
+      - /r2/right_arm/wrist/yaw
+      - /r2/right_arm/hand/index/yaw
+      - /r2/right_arm/hand/index/proximal
+      - /r2/right_arm/hand/index/medial
+      - /r2/right_arm/hand/middle/yaw
+      - /r2/right_arm/hand/middle/proximal
+      - /r2/right_arm/hand/middle/medial
+      - /r2/right_arm/hand/ringlittle/little
+      - /r2/right_arm/hand/ringlittle/ring
+      - /r2/right_arm/hand/thumb/roll
+      - /r2/right_arm/hand/thumb/proximal
+      - /r2/right_arm/hand/thumb/medial
+      - /r2/right_arm/hand/thumb/distal
+      - /r2/neck/joint0
+      - /r2/neck/joint1
+      - /r2/neck/joint2
